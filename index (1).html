@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RunWindow">
+<meta name="theme-color" content="#0f1720">
+<title>RunWindow – dry runs, rated for wind</title>
+<style>
+:root{
+  --bg:#f4f5f2;--card:#fff;--ink:#16202a;--muted:#66717c;--line:#e3e6e1;--accent:#0f6e5a;
+  --A:#2e9e5b;--B:#86b83a;--C:#e0b020;--D:#e9772b;--E:#d64545;--rain:#3d7fd6;--night:#d9dcd6;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1720;--card:#18222d;--ink:#e8edf1;--muted:#93a0ab;--line:#26323e;--accent:#4fc2a3;--night:#222d38}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 24px) env(safe-area-inset-left)}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0 4px}
+h1{font-size:22px;margin:0;letter-spacing:-.02em}
+h1 span{color:var(--accent)}
+.loc{color:var(--muted);font-size:14px;margin-top:2px}
+button{font:inherit;color:inherit;cursor:pointer}
+.iconbtn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:8px 12px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:10px 12px;font-size:16px}
+.results{list-style:none;margin:8px 0 0;padding:0}
+.results li{padding:10px 4px;border-top:1px solid var(--line);cursor:pointer}
+.results li small{color:var(--muted)}
+details summary{list-style:none;cursor:pointer;font-weight:600;display:flex;justify-content:space-between}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"Edit";color:var(--accent);font-weight:500}
+details[open] summary::after{content:"Done"}
+.sumline{color:var(--muted);font-size:14px;font-weight:400;margin-top:2px}
+.field{margin-top:14px}
+.field>label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 12px;font-size:14px}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.compass{display:grid;grid-template-columns:repeat(3,52px);gap:6px;margin-top:8px}
+.compass .chip{padding:8px 0;text-align:center;border-radius:10px}
+.compass .mid{display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center}
+.row{display:flex;gap:10px;align-items:center}
+select{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:7px 8px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:15px}
+.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+.hint{color:var(--muted);font-size:13px;margin-top:6px}
+.hero{border:none;background:linear-gradient(135deg,var(--accent),#145a8a);color:#fff}
+.hero .k{opacity:.8;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
+.hero .t{font-size:30px;font-weight:700;letter-spacing:-.02em;margin:2px 0}
+.hero .s{opacity:.92;font-size:15px}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;margin-top:22px}
+.dayhead h2{font-size:18px;margin:0}
+.dayhead small{color:var(--muted);font-size:13px}
+.strip{position:relative;display:flex;height:30px;border-radius:8px;overflow:hidden;margin:10px 0 4px;background:var(--night)}
+.strip i{flex:1;display:block}
+.strip .win{position:absolute;top:-2px;bottom:-2px;border:2.5px solid var(--ink);border-radius:8px;pointer-events:none}
+.ticks{position:relative;height:16px;font-size:11px;color:var(--muted)}
+.ticks span{position:absolute;transform:translateX(-50%)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:4px}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.period{display:flex;gap:12px;align-items:flex-start}
+.badge{flex:none;width:60px;height:50px;border-radius:12px;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;font-weight:700;font-size:18px;line-height:1}
+.badge small{font-size:8.5px;font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.03em}
+.period .main{flex:1;min-width:0}
+.period .when{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.period .meta{font-size:14px;color:var(--muted);margin-top:2px}
+.period .dir{font-size:14px;margin-top:6px;display:flex;align-items:center;gap:6px}
+.dir.good{color:var(--A)}.dir.bad{color:var(--D)}
+.arrow{width:22px;height:22px;flex:none}
+.warn{font-size:13px;color:var(--D);margin-top:4px}
+.empty{color:var(--muted);font-size:15px}
+.status{color:var(--muted);font-size:14px;text-align:center;padding:24px 0}
+.err{color:var(--E)}
+footer{color:var(--muted);font-size:12px;text-align:center;margin-top:28px}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Run<span>Window</span></h1>
+      <div class="loc" id="locLabel">No location yet</div>
+    </div>
+    <button class="iconbtn" id="refreshBtn" aria-label="Refresh forecast">↻ Refresh</button>
+  </header>
+
+  <div class="card">
+    <div class="search">
+      <input id="q" type="search" placeholder="Search a city or town" autocomplete="off" enterkeyhint="search">
+      <button class="iconbtn" id="geoBtn" aria-label="Use my location">📍 Here</button>
+    </div>
+    <ul class="results" id="results"></ul>
+  </div>
+
+  <details class="card" id="settings">
+    <summary><div>Run settings<div class="sumline" id="sumline"></div></div></summary>
+
+    <div class="field"><label>Run duration</label><div class="chips" id="durChips"></div></div>
+
+    <div class="field"><label>Route</label>
+      <div class="chips" id="routeChips"></div>
+      <div id="headingBox">
+        <div class="hint" id="headingHint"></div>
+        <div class="compass" id="compass"></div>
+      </div>
+    </div>
+
+    <div class="field"><label>Rain tolerance</label><div class="chips" id="rainChips"></div>
+      <div class="hint" id="rainHint"></div></div>
+
+    <div class="field"><label>When can you run?</label>
+      <div class="row">
+        <select id="fromH" aria-label="Earliest start"></select><span>to</span><select id="toH" aria-label="Latest finish"></select>
+      </div>
+      <div class="field toggle"><input type="checkbox" id="daylight"><label for="daylight" style="text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);margin:0">Daylight only</label></div>
+    </div>
+  </details>
+
+  <div id="out"><div class="status">Search for a place or tap 📍 Here to find your run windows.</div></div>
+
+  <footer>Forecast: <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0), 15-minute resolution. Wind is at 10 m height; at street level it's usually lighter.</footer>
+</div>
+
+<script>
+// RunWindow core logic — pure functions, no DOM. Works in browser and Node.
+// Data source: Open-Meteo forecast API (15-minute + hourly), timezone=auto.
+
+const GRADES = [
+  { max: 10, key: 'A', label: 'Excellent', note: 'Barely a breeze' },
+  { max: 18, key: 'B', label: 'Good', note: 'Light wind, hardly noticeable' },
+  { max: 26, key: 'C', label: 'Fair', note: 'Noticeable on exposed stretches' },
+  { max: 35, key: 'D', label: 'Tough', note: 'Strong wind, expect a slow leg' },
+  { max: Infinity, key: 'E', label: 'Harsh', note: 'Very windy, consider shelter' },
+];
+
+const CARDINALS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+const cardinal = (deg) => CARDINALS[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16];
+const rad = (d) => (d * Math.PI) / 180;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const avg = (arr) => (arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : 0);
+const minuteOfDay = (t) => +t.slice(11, 13) * 60 + +t.slice(14, 16);
+
+function gradeFor(effective) {
+  return GRADES.find((g) => effective < g.max);
+}
+
+// Local wall-clock "now" at the forecast location, as "YYYY-MM-DDTHH:MM".
+function locationNow(utcOffsetSeconds, nowMs = Date.now()) {
+  return new Date(nowMs + utcOffsetSeconds * 1000).toISOString().slice(0, 16);
+}
+
+// Merge 15-minute and hourly data into a single 15-minute slot list.
+// minutely_15 precipitation is mm per 15 min; hourly is mm per hour.
+function buildSlots(data) {
+  const m = data.minutely_15 || {};
+  const h = data.hourly || {};
+  const hourIdx = new Map((h.time || []).map((t, i) => [t.slice(0, 13), i]));
+  const daily = data.daily || { time: [], sunrise: [], sunset: [] };
+  const sun = new Map(daily.time.map((d, i) => [d, { rise: daily.sunrise[i], set: daily.sunset[i] }]));
+
+  // If 15-minute data is missing entirely, synthesize slots from hourly.
+  let times = m.time;
+  if (!times || !times.length) {
+    times = [];
+    for (const t of h.time || []) for (const q of ['00', '15', '30', '45']) times.push(t.slice(0, 14) + q);
+  }
+
+  return times.map((t, i) => {
+    const hi = hourIdx.get(t.slice(0, 13));
+    const hv = (k) => (hi != null && h[k] ? h[k][hi] : null);
+    const mv = (k) => (m[k] && m[k][i] != null ? m[k][i] : null);
+    let precip = mv('precipitation');
+    if (precip == null) precip = hv('precipitation') != null ? hv('precipitation') / 4 : 0;
+    const date = t.slice(0, 10);
+    const s = sun.get(date);
+    const end = addMinutes(t, 15);
+    return {
+      time: t,
+      end,
+      date,
+      mod: minuteOfDay(t),
+      precip, // mm in this 15 min
+      rate: precip * 4, // mm/h
+      prob: hv('precipitation_probability') ?? 0,
+      wind: mv('wind_speed_10m') ?? hv('wind_speed_10m') ?? 0,
+      gust: mv('wind_gusts_10m') ?? hv('wind_gusts_10m') ?? 0,
+      dir: mv('wind_direction_10m') ?? hv('wind_direction_10m') ?? 0,
+      temp: mv('temperature_2m') ?? hv('temperature_2m'),
+      feels: mv('apparent_temperature') ?? hv('apparent_temperature'),
+      daylight: s ? t >= s.rise.slice(0, 16) && end <= s.set.slice(0, 16) : true,
+    };
+  });
+}
+
+function addMinutes(t, mins) {
+  // Treat the local wall time as UTC for arithmetic only — no zone conversion.
+  return new Date(Date.parse(t + ':00Z') + mins * 60000).toISOString().slice(0, 16);
+}
+
+function isDry(slot, cfg) {
+  return slot.rate <= cfg.maxRate && slot.prob <= cfg.maxProb;
+}
+
+// Headwind component in km/h for a runner heading `heading` degrees.
+// Wind direction is where the wind comes FROM; positive = headwind.
+function headwind(slot, heading) {
+  return slot.wind * Math.cos(rad(slot.dir - heading));
+}
+
+function meanDirection(slots) {
+  let x = 0, y = 0;
+  for (const s of slots) {
+    x += s.wind * Math.sin(rad(s.dir));
+    y += s.wind * Math.cos(rad(s.dir));
+  }
+  return ((Math.atan2(x, y) * 180) / Math.PI + 360) % 360;
+}
+
+function evaluateWindow(win, cfg, ctx) {
+  const avgWind = avg(win.map((s) => s.wind));
+  const maxGust = Math.max(...win.map((s) => s.gust));
+  const effective = Math.max(avgWind, maxGust * 0.6);
+  const grade = gradeFor(effective);
+  const dir = meanDirection(win);
+  let score = clamp(100 - effective * 2.5, 0, 100);
+
+  const route = cfg.route || { type: 'loop' };
+  let dirNote, dirTone = 'neutral', bonus = 0;
+  if (avgWind < 8) {
+    dirNote = 'Too light for direction to matter';
+  } else if (route.type === 'outback') {
+    const half = Math.ceil(win.length / 2);
+    const out = avg(win.slice(0, half).map((s) => headwind(s, route.heading)));
+    const back = avg(win.slice(half).map((s) => headwind(s, route.heading + 180)));
+    const diff = out - back; // positive: headwind out, tailwind home (preferred)
+    bonus = clamp(diff * 0.5, -10, 10);
+    if (diff > 5) { dirNote = 'Headwind out, tailwind home'; dirTone = 'good'; }
+    else if (diff < -5) { dirNote = 'Tailwind out, headwind home: run the route in reverse'; dirTone = 'bad'; }
+    else dirNote = 'Mostly crosswind both ways';
+  } else if (route.type === 'oneway') {
+    const hw = avg(win.map((s) => headwind(s, route.heading)));
+    bonus = clamp(-hw * 0.7, -15, 15);
+    if (hw < -4) { dirNote = `Tailwind (~${Math.round(-hw)} km/h)`; dirTone = 'good'; }
+    else if (hw > 4) { dirNote = `Headwind (~${Math.round(hw)} km/h)`; dirTone = 'bad'; }
+    else dirNote = 'Crosswind';
+  } else {
+    dirNote = `Wind from the ${cardinal(dir)}: start into the wind, finish with it`;
+  }
+  score += bonus;
+
+  // Rain margin around the window (minutes until next wet slot after the end).
+  const { slots, endIdx } = ctx;
+  let after = null;
+  for (let j = endIdx + 1; j < slots.length && j <= endIdx + 8; j++) {
+    if (!isDry(slots[j], cfg)) { after = (j - endIdx - 1) * 15; break; }
+  }
+  if (after != null && after < 30) score -= 8;
+  const maxProb = Math.max(...win.map((s) => s.prob));
+  score -= maxProb * 0.15;
+
+  return {
+    start: win[0].time,
+    end: win[win.length - 1].end,
+    avgWind: Math.round(avgWind),
+    maxGust: Math.round(maxGust),
+    dir: Math.round(dir),
+    dirCardinal: cardinal(dir),
+    effective,
+    grade,
+    dirNote,
+    dirTone,
+    rainAfter: after,
+    maxProb,
+    temp: avg(win.map((s) => s.temp ?? 0)),
+    feels: avg(win.map((s) => s.feels ?? 0)),
+    score: Math.round(clamp(score, 0, 110)),
+  };
+}
+
+// Main entry: returns { days: [{date, periods:[...]}], best }
+function findWindows(data, cfg, nowMs = Date.now()) {
+  const slots = buildSlots(data);
+  const now = locationNow(data.utc_offset_seconds || 0, nowMs);
+  const N = Math.max(1, Math.round(cfg.durationMin / 15));
+  const from = cfg.fromHour * 60, to = cfg.toHour * 60;
+
+  const usable = slots.map((s) => {
+    if (s.time < now) return false; // only future starts
+    const endMod = s.mod + 15;
+    if (s.mod < from || endMod > to) return false;
+    if (cfg.daylightOnly && !s.daylight) return false;
+    return isDry(s, cfg);
+  });
+
+  const periods = [];
+  let i = 0;
+  while (i < slots.length) {
+    if (!usable[i]) { i++; continue; }
+    let j = i;
+    while (j + 1 < slots.length && usable[j + 1] && slots[j + 1].date === slots[i].date) j++;
+    const len = j - i + 1;
+    if (len >= N) {
+      let best = null;
+      for (let s = i; s + N - 1 <= j; s++) {
+        const w = evaluateWindow(slots.slice(s, s + N), cfg, { slots, endIdx: s + N - 1 });
+        if (!best || w.score > best.score) best = w;
+      }
+      periods.push({
+        date: slots[i].date,
+        dryFrom: slots[i].time,
+        dryTo: slots[j].end,
+        dryMinutes: len * 15,
+        best,
+      });
+    }
+    i = j + 1;
+  }
+
+  const dates = [...new Set(slots.map((s) => s.date))].filter((d) => d >= now.slice(0, 10));
+  const days = dates.map((date) => ({
+    date,
+    periods: periods.filter((p) => p.date === date),
+    slots: slots.filter((s) => s.date === date),
+    sun: (() => {
+      const k = (data.daily?.time || []).indexOf(date);
+      return k >= 0 ? { rise: data.daily.sunrise[k], set: data.daily.sunset[k] } : null;
+    })(),
+  }));
+  const best = periods.reduce((b, p) => (!b || p.best.score > b.best.score ? p : b), null);
+  return { now, days, best, slotsTotal: slots.length };
+}
+
+function forecastUrl(lat, lon, days = 3) {
+  const vars = 'precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,apparent_temperature';
+  return (
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&minutely_15=${vars}&hourly=precipitation_probability,${vars}` +
+    `&daily=sunrise,sunset&timezone=auto&forecast_days=${days}&wind_speed_unit=kmh`
+  );
+}
+
+const RunCore = { GRADES, cardinal, gradeFor, buildSlots, findWindows, forecastUrl, locationNow, addMinutes, isDry };
+if (typeof module !== 'undefined') module.exports = RunCore;
+else window.RunCore = RunCore;
+
+</script>
+<script>
+(() => {
+const C = window.RunCore;
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('rw.' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('rw.' + k, JSON.stringify(v)); } catch {} },
+};
+
+const RAIN = {
+  strict: { label: 'Bone dry', maxRate: 0.05, maxProb: 20, hint: 'No rain at all, and at most a 20% chance.' },
+  normal: { label: 'A few drops OK', maxRate: 0.2, maxProb: 40, hint: 'Allows a trace (≤0.2 mm/h) and up to a 40% chance.' },
+  relaxed: { label: 'Drizzle OK', maxRate: 0.6, maxProb: 60, hint: 'Light drizzle (≤0.6 mm/h) and up to a 60% chance.' },
+};
+const ROUTES = { loop: 'Loop', outback: 'Out & back', oneway: 'One way' };
+const HEADINGS = [['NW',315],['N',0],['NE',45],['W',270],null,['E',90],['SW',225],['S',180],['SE',135]];
+
+let cfg = Object.assign({ durationMin: 60, rain: 'normal', route: 'loop', heading: 270, fromHour: 6, toHour: 22, daylightOnly: false }, store.get('cfg', {}));
+let place = store.get('place', null);
+let lastData = null, lastFetch = 0;
+
+// ---------- settings UI ----------
+function chip(label, pressed, onClick) {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.type = 'button'; b.textContent = label;
+  b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+  b.onclick = onClick; return b;
+}
+function renderSettings() {
+  const dur = $('durChips'); dur.innerHTML = '';
+  [30, 45, 60, 75, 90, 120, 150].forEach((m) => dur.append(chip(m < 60 ? m + ' min' : (m / 60) + ' h', cfg.durationMin === m, () => update({ durationMin: m }))));
+  const rc = $('routeChips'); rc.innerHTML = '';
+  Object.entries(ROUTES).forEach(([k, v]) => rc.append(chip(v, cfg.route === k, () => update({ route: k }))));
+  $('headingBox').style.display = cfg.route === 'loop' ? 'none' : '';
+  $('headingHint').textContent = cfg.route === 'outback' ? 'Which way do you head out?' : 'Which way are you running?';
+  const cp = $('compass'); cp.innerHTML = '';
+  HEADINGS.forEach((h) => {
+    if (!h) { const d = document.createElement('div'); d.className = 'mid'; d.textContent = 'heading'; cp.append(d); return; }
+    cp.append(chip(h[0], cfg.heading === h[1], () => update({ heading: h[1] })));
+  });
+  const rn = $('rainChips'); rn.innerHTML = '';
+  Object.entries(RAIN).forEach(([k, v]) => rn.append(chip(v.label, cfg.rain === k, () => update({ rain: k }))));
+  $('rainHint').textContent = RAIN[cfg.rain].hint;
+  const opts = (sel, from, to, val) => { sel.innerHTML = ''; for (let h = from; h <= to; h++) { const o = new Option(String(h).padStart(2, '0') + ':00', h); if (h === val) o.selected = true; sel.append(o); } };
+  opts($('fromH'), 0, 23, cfg.fromHour); opts($('toH'), 1, 24, cfg.toHour);
+  $('daylight').checked = cfg.daylightOnly;
+  const dl = cfg.durationMin < 60 ? cfg.durationMin + ' min' : (cfg.durationMin / 60) + ' h';
+  $('sumline').textContent = `${dl} · ${ROUTES[cfg.route]}${cfg.route !== 'loop' ? ' ' + C.cardinal(cfg.heading) : ''} · ${RAIN[cfg.rain].label} · ${pad(cfg.fromHour)}–${pad(cfg.toHour)}${cfg.daylightOnly ? ' · daylight' : ''}`;
+}
+const pad = (h) => String(h).padStart(2, '0') + ':00';
+$('fromH').onchange = (e) => { const v = +e.target.value; update({ fromHour: v, toHour: Math.max(cfg.toHour, v + 1) }); };
+$('toH').onchange = (e) => { const v = +e.target.value; update({ toHour: v, fromHour: Math.min(cfg.fromHour, v - 1) }); };
+$('daylight').onchange = (e) => update({ daylightOnly: e.target.checked });
+
+function update(patch) { Object.assign(cfg, patch); store.set('cfg', cfg); renderSettings(); if (lastData) render(); }
+
+// ---------- location ----------
+let searchTimer;
+$('q').addEventListener('input', (e) => { clearTimeout(searchTimer); const q = e.target.value.trim(); if (q.length < 2) { $('results').innerHTML = ''; return; } searchTimer = setTimeout(() => search(q), 300); });
+async function search(q) {
+  try {
+    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&format=json`);
+    const j = await r.json();
+    const ul = $('results'); ul.innerHTML = '';
+    (j.results || []).forEach((p) => {
+      const li = document.createElement('li');
+      li.innerHTML = `${esc(p.name)} <small>${esc([p.admin1, p.country].filter(Boolean).join(', '))}</small>`;
+      li.onclick = () => { setPlace({ name: p.name + (p.country_code ? ', ' + p.country_code : ''), lat: p.latitude, lon: p.longitude }); ul.innerHTML = ''; $('q').value = ''; $('q').blur(); };
+      ul.append(li);
+    });
+    if (!j.results) ul.innerHTML = '<li><small>No matches</small></li>';
+  } catch { $('results').innerHTML = '<li><small class="err">Search failed. Check your connection.</small></li>'; }
+}
+$('geoBtn').onclick = () => {
+  if (!navigator.geolocation) return status('Location isn\'t available in this browser. Search for a place instead.', true);
+  status('Finding you…');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => setPlace({ name: 'Current location', lat: +pos.coords.latitude.toFixed(4), lon: +pos.coords.longitude.toFixed(4) }),
+    () => status('Couldn\'t get your location. Allow location access or search for a place.', true),
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+  );
+};
+function setPlace(p) { place = p; store.set('place', p); load(); }
+$('refreshBtn').onclick = () => load();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && place && Date.now() - lastFetch > 15 * 60000) load(); });
+
+// ---------- forecast ----------
+async function load() {
+  if (!place) return;
+  $('locLabel').textContent = `${place.name} · ${place.lat.toFixed(2)}, ${place.lon.toFixed(2)}`;
+  status('Loading forecast…');
+  try {
+    const r = await fetch(C.forecastUrl(place.lat, place.lon, 3));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    lastData = await r.json(); lastFetch = Date.now();
+    render();
+  } catch (e) { status('Couldn\'t load the forecast (' + e.message + '). Try again.', true); }
+}
+function status(msg, isErr) { $('out').innerHTML = `<div class="status ${isErr ? 'err' : ''}">${esc(msg)}</div>`; }
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- render ----------
+const hm = (t, end) => (end && t.slice(11, 16) === '00:00' ? '24:00' : t.slice(11, 16));
+function dayLabel(date, today) {
+  const d = new Date(date + 'T12:00:00Z');
+  const wd = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const diff = Math.round((Date.parse(date) - Date.parse(today)) / 864e5);
+  return [diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : d.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }), wd];
+}
+function arrowSvg(dirFrom) {
+  // arrow points where the wind blows TO
+  return `<svg class="arrow" viewBox="0 0 24 24" style="transform:rotate(${(dirFrom + 180) % 360}deg)"><circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-opacity=".25"/><path d="M12 4 L17 13 H13.5 V20 H10.5 V13 H7 Z" fill="currentColor"/></svg>`;
+}
+function slotColor(s, rcfg) {
+  if (!C.isDry(s, rcfg)) { const a = Math.min(1, 0.35 + s.rate / 2); return `rgba(61,127,214,${a})`; }
+  const eff = Math.max(s.wind, s.gust * 0.6);
+  const g = C.gradeFor(eff).key;
+  return `var(--${g})`;
+}
+
+function render() {
+  const rcfg = RAIN[cfg.rain];
+  const run = { durationMin: cfg.durationMin, maxRate: rcfg.maxRate, maxProb: rcfg.maxProb, fromHour: cfg.fromHour, toHour: cfg.toHour, daylightOnly: cfg.daylightOnly, route: { type: cfg.route, heading: cfg.heading } };
+  const res = C.findWindows(lastData, run);
+  const today = res.now.slice(0, 10);
+  let html = '';
+
+  if (res.best) {
+    const b = res.best.best, [dl] = dayLabel(res.best.date, today);
+    html += `<div class="card hero"><div class="k">Best window</div><div class="t">${dl} ${hm(b.start)}–${hm(b.end, 1)}</div>
+      <div class="s">${b.grade.label} wind: ${b.avgWind} km/h from ${b.dirCardinal}, gusts ${b.maxGust} · ${Math.round(b.temp)}°C (feels ${Math.round(b.feels)}°)</div></div>`;
+  } else {
+    html += `<div class="card"><div class="empty">No dry ${cfg.durationMin}-minute window in the next few days with these settings. Try a shorter run, a wider time range or a more relaxed rain tolerance.</div></div>`;
+  }
+
+  const span = (cfg.toHour - cfg.fromHour) * 4;
+  for (const day of res.days) {
+    const [dl, sub] = dayLabel(day.date, today);
+    const sun = day.sun ? `☀︎ ${hm(day.sun.rise)}–${hm(day.sun.set)}` : '';
+    html += `<div class="dayhead"><h2>${dl} <small>${sub}</small></h2><small>${sun}</small></div>`;
+
+    // timeline strip
+    const cells = day.slots.filter((s) => s.mod >= cfg.fromHour * 60 && s.mod < cfg.toHour * 60);
+    let strip = '';
+    for (const s of cells) {
+      const past = s.end <= res.now;
+      const dark = !s.daylight;
+      let bg = slotColor(s, rcfg);
+      strip += `<i style="background:${bg};opacity:${past ? 0.15 : dark ? 0.45 : 1}"></i>`;
+    }
+    for (const p of day.periods) {
+      const a = (+p.best.start.slice(11, 13) * 60 + +p.best.start.slice(14, 16) - cfg.fromHour * 60) / 15;
+      const w = cfg.durationMin / 15;
+      strip += `<div class="win" style="left:${(a / span) * 100}%;width:${(w / span) * 100}%"></div>`;
+    }
+    let ticks = '';
+    const step = (cfg.toHour - cfg.fromHour) > 12 ? 3 : (cfg.toHour - cfg.fromHour) > 6 ? 2 : 1;
+    for (let h = Math.ceil(cfg.fromHour / step) * step; h <= cfg.toHour; h += step) ticks += `<span style="left:${((h - cfg.fromHour) / (cfg.toHour - cfg.fromHour)) * 100}%">${String(h % 24).padStart(2, '0')}</span>`;
+    html += `<div class="strip">${strip}</div><div class="ticks">${ticks}</div>`;
+
+    if (!day.periods.length) {
+      html += `<div class="card"><div class="empty">No dry ${cfg.durationMin}-minute window${day.date === today ? ' left today' : ''}.</div></div>`;
+    }
+    for (const p of day.periods) {
+      const b = p.best, g = b.grade;
+      const dryH = p.dryMinutes >= 60 ? (p.dryMinutes / 60).toFixed(p.dryMinutes % 60 ? 1 : 0) + ' h' : p.dryMinutes + ' min';
+      const flex = p.dryMinutes > cfg.durationMin ? `Dry ${hm(p.dryFrom)}–${hm(p.dryTo, 1)} (${dryH})` : 'Just fits, no slack';
+      html += `<div class="card period">
+        <div class="badge" style="background:var(--${g.key})">${g.key}<small>${g.label}</small></div>
+        <div class="main">
+          <div class="when">${hm(b.start)}–${hm(b.end, 1)}</div>
+          <div class="meta">${b.avgWind} km/h from ${b.dirCardinal}, gusts ${b.maxGust} · ${Math.round(b.temp)}°C, feels ${Math.round(b.feels)}°</div>
+          <div class="meta">${flex}${b.maxProb ? ` · rain chance ≤${b.maxProb}%` : ''}</div>
+          <div class="dir ${b.dirTone}">${arrowSvg(b.dir)}<span>${esc(b.dirNote)}</span></div>
+          ${b.rainAfter != null && b.rainAfter < 30 ? `<div class="warn">⚠︎ Rain due ${b.rainAfter ? b.rainAfter + ' min' : 'right'} after you finish. Don't start late.</div>` : ''}
+        </div></div>`;
+    }
+  }
+  html += `<div class="legend"><span><b style="background:var(--A)"></b>Calm</span><span><b style="background:var(--C)"></b>Breezy</span><span><b style="background:var(--E)"></b>Windy</span><span><b style="background:var(--rain)"></b>Rain</span><span>Outlined = best start</span></div>`;
+  $('out').innerHTML = html;
+}
+
+renderSettings();
+if (place) load();
+})();
+</script>
+</body>
+</html>
